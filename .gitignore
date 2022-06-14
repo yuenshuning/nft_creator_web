@@ -1,0 +1,4 @@
+# local env file
+.env
+node_modules
+key.js
