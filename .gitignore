@@ -2,3 +2,4 @@
 .env
 node_modules
 key.js
+solc-plugin-verify-proxy
