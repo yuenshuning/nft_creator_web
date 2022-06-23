@@ -182,13 +182,13 @@ async function main() {
     
     // verify
     // update config for subsequent verify
-    proxy_address = '0x102517B047Fd75ea87CC835cacdb0fF32334e1B1'
+    proxy_address = '0x704d8C70F7254C4aA0A7EF2656206e31913e9A96'
     config.contract_name_address_pairs.push(`${contractName}@${proxy_address}`)
     let isVerified = await verify()
     console.log(isVerified)
 
     // airdrop or self-mint
-    proxy_address = '0x102517B047Fd75ea87CC835cacdb0fF32334e1B1'
+    proxy_address = '0x704d8C70F7254C4aA0A7EF2656206e31913e9A96'
     const mint_to = '0xb72B1dE0E431FA88bD24be4Ea0Eab3661abFBa35'
     let mint_res = await mint(proxy_address, mint_to)
     console.log({ mint_res })
