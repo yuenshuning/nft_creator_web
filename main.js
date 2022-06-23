@@ -6,9 +6,11 @@ const {
     privateKey
 } = require("./key")
 
-const verify_plugin = require('./solc-plugin-verify-proxy/verify')
+const verify_plugin = require('solc-plugin-verify-proxy/verify')
 
-const fileName = 'ERC721Creator';
+const contractName = 'ERC721Creator';
+const filePath = `contracts/${contractName}.sol`;
+
 let config = {
     api_keys: {
         etherscan: 'AA3K43AEQ43AZ2RQXW59FNUG4KB1Q84FZ8'
@@ -39,18 +41,15 @@ let config = {
             skipDryRun: true
         }
     },
+    network: 'rinkeby',
     working_directory: '/Users/shuning/code/nft_creator_web',
     contracts_build_directory: '/Users/shuning/code/nft_creator_web/build',
-    // contracts_directory: '/Users/shuning/code/truffle-plugin-verify/contracts',
-    _: ['verify', fileName],
+    contract_name_address_pairs: [],
     debug: true
 }
 
-const network = 'rinkeby'
 const token_uri = 'ipfs://QmdVXTnbXPLBk5JjiXcZCyS6z42ugEh8265apaa7LACW4F/2.json'
-
-config.provider = config.networks[network].provider()
-const web3 = new Web3(config.provider);
+const web3 = new Web3(config.networks[config.network].provider());
 web3.eth.accounts.wallet.add(privateKey);
 
 async function deploy_contract() {
@@ -59,14 +58,10 @@ async function deploy_contract() {
     console.log({ deployeAddr })
 
     // compile
-    let source = fs.readFileSync(`contracts/${fileName}.sol`, 'UTF-8');
+    let source = fs.readFileSync(filePath, 'UTF-8');
     let input = {
         language: 'Solidity',
-        sources: {
-            'project:/contracts/ERC721Creator.sol': {
-                content: source
-            }
-        },
+        sources: {},
         settings: {
             remappings: [ "@openzeppelin/=./node_modules/@openzeppelin/" ],
             outputSelection: {
@@ -76,6 +71,9 @@ async function deploy_contract() {
             }
         }
     };
+    input.sources[filePath] = {
+        content: source
+    }
 
     // import external files
     function findImports(path) {
@@ -86,13 +84,13 @@ async function deploy_contract() {
 
     // compile
     let calcCompiled = JSON.parse(solc.compile(JSON.stringify(input), { import: findImports }));
-    calcCompiled = calcCompiled['contracts']['project:/contracts/ERC721Creator.sol'][fileName]
+    let targetCompiled = calcCompiled['contracts'][filePath][contractName]
 
     // get abi
-    let abi = calcCompiled['abi'];
+    let abi = targetCompiled['abi'];
 
     // get bytecode
-    let bytecode = calcCompiled.evm.bytecode.object
+    let bytecode = targetCompiled.evm.bytecode.object
     console.log(abi, bytecode)
 
     // new Contract
@@ -105,7 +103,7 @@ async function deploy_contract() {
     }).send({
         from: deployeAddr,
         gas: 1500000
-    }).on('error', (error) => { 
+    }).on('error', (error) => {
         console.error(error)
     }).on('transactionHash', (transaction_hash) => {
         console.log({ transaction_hash })
@@ -114,26 +112,24 @@ async function deploy_contract() {
         return instance.options.address
     });
 
-    calcCompiledCopy = JSON.parse(JSON.stringify(calcCompiled))
-    if (!calcCompiledCopy.networks) {
-        calcCompiledCopy.networks = {}
-    }
-    calcCompiledCopy.networks[`${config.networks[network].network_id}`] = { 'address': proxy_address }
-    calcCompiledCopy.contractName = fileName
-    calcCompiledCopy.bytecode = '0x' + calcCompiledCopy.evm.bytecode.object
-    calcCompiledCopy.ast = {
-        'absolutePath': `/contracts/${fileName}.sol`
-    }
+    // calcCompiledCopy = JSON.parse(JSON.stringify(calcCompiled))
+    
     try {
         // pretty-print JSON object to string
-        const data = JSON.stringify(calcCompiledCopy, null, 2);
-        fs.writeFileSync(`./build/${fileName}.json`, data);
+        const data = JSON.stringify(targetCompiled, null, 2);
+        fs.writeFileSync(`./build/${contractName}.json`, data);
         console.log("JSON data is saved.");
     } catch (error) {
         console.error(error);
     }
 
     return proxy_address
+}
+
+async function verify() {
+    console.log(config)
+    let isSuccess = await verify_plugin(config)
+    return isSuccess
 }
 
 async function mint(proxy_address, mint_to) {
@@ -176,31 +172,27 @@ async function mint(proxy_address, mint_to) {
     return result.status
 }
 
-async function verify() {
-    console.log(config)
-    let isSuccess = await verify_plugin(config)
-    return isSuccess
-}
-
 async function main() {
     
+    let proxy_address
+
     // // deploy
-    // let proxy_address = await deploy_contract()
-    // // proxy_address = '0x0c52e85A0fc951482c890e0d2B320DC4e7332eB9'
+    // proxy_address = await deploy_contract()
     // console.log({ proxy_address })
     
-
     // verify
-    let isSuccess = await verify()
-    console.log(isSuccess)
+    // update config for subsequent verify
+    proxy_address = '0xeCcD9c5ac191bc24F317F4977Dd085645CA202AA'
+    config.contract_name_address_pairs.push(`${contractName}@${proxy_address}`)
+    let isVerified = await verify()
+    console.log(isVerified)
 
-    /*
-    // airdrop or self-mint
-    const mint_to = '0xb72B1dE0E431FA88bD24be4Ea0Eab3661abFBa35'
-    let mint_res = await mint(proxy_address, mint_to)
-    console.log({ mint_res })
-
-    */
+    
+    // // airdrop or self-mint
+    // proxy_address = '0xeCcD9c5ac191bc24F317F4977Dd085645CA202AA'
+    // const mint_to = '0xb72B1dE0E431FA88bD24be4Ea0Eab3661abFBa35'
+    // let mint_res = await mint(proxy_address, mint_to)
+    // console.log({ mint_res })
 }
 
 main()

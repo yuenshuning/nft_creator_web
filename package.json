@@ -1,12 +1,8 @@
 {
   "dependencies": {
     "@openzeppelin/contracts": "^4.6.0",
-    "axios": "^0.26.1",
-    "cli-logger": "^0.5.40",
-    "delay": "^5.0.0",
-    "querystring": "^0.2.1",
     "solc": "^0.8.14-fixed",
-    "tunnel": "0.0.6",
+    "solc-plugin-verify-proxy": "^0.0.1",
     "web3": "^1.7.3"
   }
 }
