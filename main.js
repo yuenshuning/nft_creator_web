@@ -176,23 +176,22 @@ async function main() {
     
     let proxy_address
 
-    // // deploy
-    // proxy_address = await deploy_contract()
-    // console.log({ proxy_address })
+    // deploy
+    proxy_address = await deploy_contract()
+    console.log({ proxy_address })
     
     // verify
     // update config for subsequent verify
-    proxy_address = '0xeCcD9c5ac191bc24F317F4977Dd085645CA202AA'
+    proxy_address = '0x102517B047Fd75ea87CC835cacdb0fF32334e1B1'
     config.contract_name_address_pairs.push(`${contractName}@${proxy_address}`)
     let isVerified = await verify()
     console.log(isVerified)
 
-    
-    // // airdrop or self-mint
-    // proxy_address = '0xeCcD9c5ac191bc24F317F4977Dd085645CA202AA'
-    // const mint_to = '0xb72B1dE0E431FA88bD24be4Ea0Eab3661abFBa35'
-    // let mint_res = await mint(proxy_address, mint_to)
-    // console.log({ mint_res })
+    // airdrop or self-mint
+    proxy_address = '0x102517B047Fd75ea87CC835cacdb0fF32334e1B1'
+    const mint_to = '0xb72B1dE0E431FA88bD24be4Ea0Eab3661abFBa35'
+    let mint_res = await mint(proxy_address, mint_to)
+    console.log({ mint_res })
 }
 
 main()
